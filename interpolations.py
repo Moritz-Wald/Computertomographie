@@ -2,7 +2,18 @@ import numpy as np
 
 
 def bilinear_interpolate(image, x, y):
-    """ THIS WAS TAKEN FROM THE INTERNET"""
+    """ THIS WAS TAKEN FROM THE INTERNET
+    Run bilinear interpolation using the image to get the value of the
+    grid-points defined by x and y.
+
+    Arguments:
+        image (np.ndarray): the image to interpolate the values from
+        x (np.ndarray): the grid-points x-coordinates
+        y (np.ndarray): the grid-points y-coordinates
+
+    Returns:
+        np.ndarray: the interpolated values of the grid-points
+    """
     x0 = np.floor(x).astype(int)
     y0 = np.floor(y).astype(int)
 
@@ -31,7 +42,18 @@ def bilinear_interpolate(image, x, y):
 
 
 def nearest_neighbor_interpolate(img, x, y):
-    """ THIS WAS ADAPTED FROM THE BILINEAR ONE PULLED FROM THE INTERNET ABOVE"""
+    """ THIS WAS ADAPTED FROM THE BILINEAR ONE PULLED FROM THE INTERNET ABOVE
+    Run nearest-neighbour interpolation using the image to get the value
+    of the grid-points defined by x and y.
+
+    Arguments:
+        image (np.ndarray): the image to interpolate the values from
+        x (np.ndarray): the grid-points x-coordinates
+        y (np.ndarray): the grid-points y-coordinates
+
+    Returns:
+        np.ndarray: the interpolated values of the grid-points
+    """
     x_rounded = np.round(x).astype(int)
     y_rounded = np.round(y).astype(int)
 
