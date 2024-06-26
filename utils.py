@@ -6,13 +6,17 @@ import numpy as np
 
 
 def load_vector(file: str | Path) -> np.ndarray:
-    vec = []
+    vec = list()
     with open(file, 'r') as f:
         for line in f.readlines():
             try:
                 vec.append(float(line))
             except ValueError as e:
-                raise e
+                if not line:
+                    continue
+                arr = list(map(float, filter(None, line.strip().split(' '))))
+                if arr:
+                    vec.append(np.array(arr))
     return np.array(vec, dtype=np.float64)
 
 
