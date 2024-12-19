@@ -1,6 +1,9 @@
+from functools import partial
+
 import numpy as np
 
 from interpolations import nearest_neighbor_interpolate, bilinear_interpolate
+import multiprocessing as mp
 
 
 def rotate_theta(theta: float) -> np.ndarray:
@@ -61,9 +64,55 @@ def rotate_image(image: np.ndarray, angles, method: str = 'nearest'):
     return rotated_images
 
 
+def rotate_image_mp(image: np.ndarray, angles, method: str = 'nearest'):
+    """Rotates an image by the given angles using a chosen interpolation method.
+
+    Arguments:
+        image (np.ndarray): an NxN grayscale image to rotate
+        angles (np.ndarray): a list of rotation angles to rotate the image with
+        method (str): interpolation method ('nearest', 'bilinear')
+
+    Returns:
+        np.ndarray: (len(angles)xNxN) array of the rotated images
+    """
+
+    if method == 'nearest':
+        interpolate = nearest_neighbor_interpolate
+    elif method == 'bilinear':
+        interpolate = bilinear_interpolate
+    else:
+        raise ValueError('method must be either "nearest" or "bilinear"')
+
+    angles_rad = np.deg2rad(angles)
+
+    # rotated_images = np.zeros((len(angles), height, width), dtype=image.dtype)
+    with mp.Pool(processes=mp.cpu_count()) as pool:
+        rotated_images = pool.map_async(partial(pool_rotate, image, interpolate), angles_rad)
+        rotated_images.wait()
+
+    return np.array(rotated_images.get())
+
+
+def pool_rotate(image, interpolate, angle):
+    height, width = image.shape
+    cx, cy = height / 2, width / 2
+
+    y, x = np.meshgrid(np.arange(height), np.arange(width))
+    x = x - cx
+    y = y - cy
+    new_coords = np.matmul(rotate_theta(angle), np.vstack((x.flatten(), y.flatten())))
+    new_x = new_coords[0].reshape(height, width) + cx
+    new_y = new_coords[1].reshape(height, width) + cy
+
+    new_x = np.clip(new_x, 0, width - 1)
+    new_y = np.clip(new_y, 0, height - 1)
+    return interpolate(image, new_x, new_y)
+
+
 def radon(image: np.ndarray,
           angles: np.ndarray = np.arange(180),
-          method: str = 'nearest') -> np.ndarray:
+          method: str = 'nearest',
+          mp: bool = True) -> np.ndarray:
     """Apply a radon transform to an image.
 
     Arguments:
@@ -74,4 +123,6 @@ def radon(image: np.ndarray,
     Returns:
         np.ndarray: The sinogram result of the radon transform.
     """
+    if mp:
+        return rotate_image_mp(image, angles, method).sum(axis=-1).T
     return rotate_image(image, angles, method).sum(axis=-1).T
